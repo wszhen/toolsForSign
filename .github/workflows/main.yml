@@ -1,0 +1,56 @@
+name: Build and upload
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # 工作的名称“编译windows版”
+  buildWin:
+    # 运行的操作系统 windows server 2022
+    runs-on: windows-latest
+
+    # 步骤
+    steps:
+      - uses: actions/checkout@v2
+      - name: install
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20.x
+      - run:
+          npm install && npm run buildWin # buildWin buildMac命令一样，为了区分。
+
+      - name: Upload File
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows
+          path: out/make/squirrel.windows/x64/*.exe
+
+
+  buildMac:
+    # 运行的操作系统 macOS BigSur
+    runs-on: macos-11
+    # 步骤
+    steps:
+      # 使用预制action：拉取最新的代码
+      - uses: actions/checkout@v2
+      # 步骤一的名称：
+      - name: Install and Build
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20.x
+      - run:
+          npm install && npm run buildMac
+
+      # 步骤二的名称：将编译后的结果上传
+      - name: Upload File
+        # 使用预制action：上传文件，可以将执行路径打包成zip上传
+        uses: actions/upload-artifact@v2
+        with:
+          # 上传后文件的名称
+          name: mac
+          # 打包的路径以及文件过滤，此为仅打包dist目录下的dmg文件
+#          path: out/make/zip/darwin/x64/*.zip
+

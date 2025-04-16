@@ -1,0 +1,1 @@
+{"qrcode":{"x":560,"y":1072,"w":133,"h":133,"color":"#fff","bgcolor":"#000"},"name":{"font":"italic bolder 55px","color":"#fff","x":58,"y":76},"电话":{"font":"italic bolder 60px","color":"#000","x":300,"y":300}}
