@@ -1,0 +1,34 @@
+{
+    "name": "sign-tools",
+    "version": "1.0.0",
+    "main": "main.js",
+    "description": "tools for sign",
+    "author": "lihaibin",
+    "license": "ISC",
+    "devDependencies": {
+        "electron": "^20.0.0",
+        "electron-builder": "latest",
+        "electron-packager": "latest"
+    },
+    "dependencies": {
+        "ajv": "^6.0.0",
+        "node-xlsx": "^0.12.1",
+        "nodemailer": "^4.6.8",
+        "nodemailer-smtp-transport": "^2.7.4",
+        "nodemailer-wellknown": "^0.2.3",
+        "request": "^2.79.0"
+    },
+    "build": {
+        "appId": "com.lihaibin.weichongyi-tools",
+        "copyright": "lihaibin",
+        "productName": "weichongyi-tools",
+        "win": {
+            "icon": "app256.ico"
+        }
+    },
+    "scripts": {
+        "builderdir": "electron-builder --dir",
+        "builder": "electron-packager . sing-tools --electron-version 3.0.7 --out ../OutApp --win --overwrite --icon=app.ico",
+        "packager": "electron-packager . sing-tools --electron-version 3.0.7 --out ../OutApp --win --overwrite --icon=app.ico"
+    }
+}

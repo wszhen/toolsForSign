@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <title>微宠医自动工具</title>
+    <meta http-equiv="keywords" content="email自动发送">
+    <meta http-equiv="description" content="email自动发送">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+</head>
+
+<body>
+    <!-- 头部 开始 -->
+    <div id="qrcode" style="display:none"></div>
+    <div class="header">
+        <div class="header-logo">查找图片</div>
+        <div class="header-logo"> <button class="btn btn-xs btn-success" type="button"
+                onclick="javascript:connectMain('haibao')" style="margin-right:10px">海报功能</button><button
+                class="btn btn-xs btn-warning" type="button" onclick="javascript:connectMain('email')"
+                style="margin-right:10px">邮件功能</button></div>
+        <div class="header-right">
+            <div class="">
+                <p class="user-text">
+                    <button class="btn btn-xs btn-success" type="button" onclick="javascript:connectMain('opendebug')"
+                        style="margin-right:10px">Debug</button>
+                </p>
+                <p class="user-text">
+                    <button class="btn btn-xs btn-success" type="button" onclick="javascript:window.location.reload();"
+                        style="margin-right:10px">刷新</button>
+                </p>
+                <p class="user-text"><button id="viewBtn" class="btn btn-success funcBtn" type="button"
+                        onclick="loadCsv(1);" style="margin-right:10px">查看图片</button></p>
+                <p class="user-text"><button class="btn funcBtn" type="button" onclick="downloadAll();">下载全部<span
+                            id="downloadTips"></span></button></p>
+            </div>
+        </div>
+    </div>
+    <!-- 头部 结束 -->
+    <!-- 正文 开始 -->
+    <div id="container">
+        <!-- <div class="row" id="textInfo">
+            <div class="col-3" style="padding: 10px">
+                合作医院<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="1030 家">
+            </div>
+            <div class="col-3" style="padding: 10px">
+                宠主数量<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="23596 人">
+            </div>
+            <div class="col-3" style="padding: 10px">
+                累计分润<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="193776 元">
+            </div>
+            <div class="col-3" style="padding: 10px">
+                截至：<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="2018年10月31">
+            </div>
+        </div> -->
+    </div>
+    <div class="row">
+        <div id="holder" class="col-12" style="padding: 10px">
+            <textarea id="dateTextArea" type="textarea" rows="16" style="width:100%;overflow-y:scroll;"
+                placeholder="请将数据文件（excel，csv）拖入此处。"></textarea>
+        </div>
+    </div>
+    <div class="col-6">
+    </div>
+    <div id="mainRow" class="row">
+    </div>
+    </div>
+    <!-- 正文 结束 -->
+    <!-- modal修改密码 小版 结束-->
+    <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+    <script>
+        if (typeof module === 'object') {
+            window.jQuery = window.$ = module.exports;
+        }; //解决jquery的兼容性
+    </script>
+    <script type="text/javascript" src="js/jquery.qrcode.min.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <script type="text/javascript" src="js/d3.custom.min.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <script type="text/javascript">
+        //默认保存格式
+        var downloadImgType = 'jpg';
+        var downloadVideoType = "mp4";
+
+        function loadCsv(type) {
+            var dateTmp = $("#dateTextArea").val();
+            if (dateTmp) {
+                $('.funcBtn').attr('disabled', true);
+                formatDate(dateTmp);
+            } else {
+                alert("请将数据文件拖入,文件格式必须为csv，编码格式utf-8");
+            }
+        }
+        //var fixArr = {};
+        function formatDate(data) {
+            //fixArr = {};
+            dataArr = [];
+            var allRows = data.split(/\r?\n|\r/);
+            $('#mainRow').empty();
+            for (var i = 0; i < allRows.length; i++) {
+                if (allRows[i] != '') {
+                    var rowCells = allRows[i].split(',');
+                    //去掉头尾的空格
+                    hechengHBImgTest(rowCells[0], rowCells[1]);
+                    dataArr.push([rowCells[0], rowCells[1]]);
+                }
+            }
+            $('.funcBtn').attr('disabled', false);
+        }
+        function hechengHBImgTest(i, c) {
+            //var haibaoImgSrc = c;
+            var htmlTmp = ''
+            // if (fixArr[i]) {
+            //     fixArr[i].push(i + "_" + fixArr[i].length);
+            // } else {
+            //     fixArr[i] = [];
+            //     fixArr[i].push(i);
+            // }
+            htmlTmp += '<div class="col-2">'
+            htmlTmp += '<div id="div_' + i + '" class="wrapper-img-box img-box-preview">'
+            htmlTmp += '<img id="img_' + i + '" src="' + c + '" title="' + i + '" onerror="this.src=\'images/err1.png\'">'
+            htmlTmp += '</div>'
+            htmlTmp += '<p id="p_' + i + '" style="overflow:hidden;">' + c + '</p>'
+            htmlTmp += '<p id="p2_' + i + '" style="overflow:hidden;">' + i + '</p>'
+            htmlTmp += '</div>'
+            $('#mainRow').append(htmlTmp);
+        }
+
+        var filePath = "download/";
+        var downloadImg = function (i) {
+            var itemTmp = dataArr[i];
+            if (itemTmp) {
+                if (itemTmp[1].indexOf("localhost") >= 0) {
+                    if (dataArr[i + 1]) {
+                        downloadImg(i + 1);
+                    } else {
+                        $('.funcBtn').attr('disabled', false)
+                        alert('下载完成，请在download文件夹下查看');
+                        //$("#downloadTips").html("");
+                    }
+                    return false;
+                }
+                var req = request(itemTmp[1]);
+                var fileName = itemTmp[0] + '.' + "jpg";
+
+                req.on('response', function (response) {
+                    if (response.headers["content-type"].indexOf("text/html") >= 0 ||
+                        response.statusCode != 200
+                    ) {
+                        console.log(fileName + '保存出错：' + response.statusCode + " " + response.headers["content-type"] + " " + response.request.href);
+                        //保存失败
+                        $("#downloadTips").html("（" + (i + 1) + "/" + dataArr.length + "）");
+                        if (dataArr[i + 1]) {
+                            downloadImg(i + 1);
+                        } else {
+                            $('.funcBtn').attr('disabled', false)
+                            alert('下载完成，请在download文件夹下查看');
+                            //$("#downloadTips").html("");
+                        }
+                        return false;
+                    }
+                    if (response.headers["content-type"].indexOf("image") < 0) {
+                        fileName = itemTmp[0] + '.' + "mp4";
+                    }
+                    //get info from headers here
+                    var stream = fs.createWriteStream(filePath + fileName);
+                    response.pipe(stream).on('close', function () {
+                        console.log(filePath + fileName + 'saved!')
+                        //保存成功
+                        $("#downloadTips").html("（" + (i + 1) + "/" + dataArr.length + "）");
+                        if (dataArr[i + 1]) {
+                            downloadImg(i + 1);
+                        } else {
+                            $('.funcBtn').attr('disabled', false)
+                            alert('下载完成，请在download文件夹下查看');
+                            //$("#downloadTips").html("");
+                        }
+                    });
+                })
+            } else {
+                alert('出错')
+                $('.funcBtn').attr('disabled', false)
+            }
+            // var request(src).pipe(
+            //                 fs.createWriteStream(dest)
+            //                 ).on('close', function () {
+            //                 console.log('pic saved!')
+            //             })
+
+
+        }
+
+        //下载海报
+        function downloadAll() {
+            if (dataArr.length > 0) {
+                $('.funcBtn').attr('disabled', true);
+                downloadImg(0); //开始下载队列
+            } else {
+                alert("请先点击查看数据");
+            }
+        }
+    </script>
+</body>
+
+</html>

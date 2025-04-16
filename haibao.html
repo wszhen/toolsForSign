@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="renderer" content="webkit" />
+  <title>微宠医自动工具</title>
+  <meta http-equiv="keywords" content="海报自动生成" />
+  <meta http-equiv="description" content="海报自动生成" />
+  <link rel="stylesheet" type="text/css" href="css/index.css" />
+</head>
+
+<body>
+  <!-- 头部 开始 -->
+  <div class="header">
+    <div class="header-logo">海报自动生成</div>
+    <div class="header-logo"> <button class="btn btn-xs btn-warning" type="button"
+        onclick="javascript:connectMain('email')" style="margin-right:10px">邮件功能</button><button
+        class="btn btn-xs btn-success" type="button" onclick="javascript:connectMain('pic')"
+        style="margin-right:10px">导图功能</button></div>
+    <div class="header-right">
+      <p class="user-text">
+        <button class="btn btn-xs btn-warning" type="button" onclick="saveConfig();"
+          style="margin-right:10px">保存位置参数</button>
+      </p>
+      <p class="user-text">
+        <button class="btn btn-xs btn-success" type="button" onclick="javascript:connectMain('opendebug')"
+          style="margin-right:10px">Debug</button>
+      </p>
+      <p class="user-text">
+        <button class="btn btn-xs btn-success" type="button" onclick="javascript:window.location.reload();"
+          style="margin-right:10px">刷新</button>
+      </p>
+      <p class="user-text">
+        <button class="btn funcBtn" type="button" onclick="loadCsv(0);" style="margin-right:10px">预览海报（6张）</button>
+      </p>
+      <p class="user-text">
+        <button class="btn funcBtn" type="button" onclick="loadCsv(1);" style="margin-right:10px">预览二维码贴纸</button>
+      </p>
+      <p class="user-text"><button class="btn funcBtn" type="button" onclick="downloadAll();">下载全部<span
+            id="downloadTips"></span></button></p>
+    </div>
+  </div>
+  <!-- 头部 结束 -->
+  <!-- 正文 开始 -->
+  <div id="container">
+    <div class="row">
+      <div id="holder" class="col-6" style="padding: 10px">
+        <textarea id="dateTextArea" type="textarea" rows="6" style="width:100%;overflow-y:scroll;" placeholder="请将数据文件（excel，csv）拖入此处。数据实例（表头名称不能变，列顺序可以换）：
+        医院名称,二维码,MDM号,电话
+        XXX动物医院,http://t.cn/E7kK4cp,1112,18611111111
+        YYY动物医院,http://t.cn/E7kK3dZ,1113,18611111111"></textarea>
+      </div>
+      <div id="configDiv" class="col-6" style="padding: 10px">
+
+      </div>
+    </div>
+    <div class="col-6"></div>
+    <div id="mainRow" class="row"></div>
+  </div>
+  <img src="images/bg.png" width="1px" height="1px" /> <img src="images/logo.png" width="1px" height="1px" />
+  <div id="qrcode" style="display:none"></div>
+  <!-- 正文 结束 -->
+  <!-- modal修改密码 小版 结束 -->
+  <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+  <script>
+    if (typeof module === 'object') {
+      window.jQuery = window.$ = module.exports
+    } //解决jquery的兼容性
+  </script>
+  <script type="text/javascript" src="js/jquery.qrcode.min.js"></script>
+  <script type="text/javascript" src="js/index.js"></script>
+  <script type="text/javascript">
+    //初始配置
+    var config = {
+      qrcode: {
+        x: 560,
+        y: 1072,
+        w: 133,
+        h: 133,
+        color: "#fff",
+        bgcolor: "#000"
+      },
+      name: {
+        font: "italic bolder 55px arial",
+        color: "#fff",
+        x: 58,
+        y: 76
+      }
+    };
+    //二维码上的logo设置
+    var logoConfig = {
+      img: "images/logo.png",
+      x: function () {
+        return config.qrcode.x + 3 / 8 * config.qrcode.w
+      },
+      y: function () {
+        return config.qrcode.y + 3 / 8 * config.qrcode.h
+      },
+      w: function () {
+        return config.qrcode.w / 4
+      },
+      h: function () {
+        return config.qrcode.h / 4
+      }
+    };
+
+    //默认保存格式
+    var downloadImgType = 'jpg';
+    //0海报 1二维码
+    var creatType = 0;
+    //默认字体
+    //var fontConfig = "'microsoft yahei'";
+    //表头字段数组
+    var headNames = [];
+    //重要表头字段
+    var headNamesVp = {
+      "医院名称": "name",
+      "二维码": "qrcode",
+      "MDM号": "id"
+    };
+    //读取配置文件
+    fs.readFile('config.txt', function (error, data) {
+      if (error) {
+        initConfigDiv();
+        console.log(error);
+        return false;
+      }
+      config = JSON.parse(data); //读取config信息 
+      //console.log(data);  //data是读取的十六进制的数据。  也可以在参数中加入编码格式"utf8"来解决十六进制的问题;
+      console.log(config);
+      initConfigDiv();
+    })
+    //确保下载目录存在
+    fs.mkdir('download', function (error) {
+      if (error) {
+        console.log(error);
+        return false;
+      }
+      console.log('创建目录成功');
+    })
+    // 写xlsx
+    // var buffer = xlsx.build(data);
+    // fs.writeFile('./resut.xls', buffer, function (err) {
+    //   if (err)
+    //     throw err;
+    //   console.log('Write to xls has finished');
+
+    //   // 读xlsx
+    //   var obj = xlsx.parse("./" + "resut.xls");
+    //   console.log(JSON.stringify(obj));
+    // });
+
+    //保存设置
+    function saveConfig() {
+      fs.writeFile('config.txt', JSON.stringify(config), 'utf8', function (error) {
+        if (error) {
+          console.log(error);
+          return false;
+        }
+        alert('写入成功');
+      })
+    }
+
+    //初始化配置设置区域
+    function initConfigDiv() {
+      $("#configDiv").html("");
+      for (var key in config) {
+        var htmlTmp = "<div><span>" + (key == "name" ? "店名" : (key == "qrcode" ? "二维码" : key)) +
+          "&nbsp;&nbsp;</span>";
+        //$("#configDiv").append("<div>" + key + "</div>")
+        //console.log(key,config[key])
+        for (var key2 in config[key]) {
+          htmlTmp += "<span>" + key2 + "：<input id=" + key + "_" + key2 + " value='" + config[key][key2] +
+            "'></input></span>";
+        }
+        if (key != "name" && key != "qrcode") {
+          htmlTmp += "<button class='btn btn-xs' type='button' onclick='deleteConfigKey(\"" + key + "\");'>删除</button>";
+        }
+        htmlTmp += "</div>"
+        $("#configDiv").append(htmlTmp);
+      }
+    }
+    //删除配置项
+    function deleteConfigKey(key) {
+      $(event.target).parent().remove();
+      delete config[key];
+    }
+    //同步配置与输入框
+    $("#configDiv").on('change', 'input', function (event) {
+      var keys = event.target.id.split("_");
+      var valueTmp = $(event.target).val();
+      if (keys[1] == "x" || keys[1] == "y" || keys[1] == "w" || keys[1] == "h") {
+        valueTmp = parseInt(valueTmp);
+        if (isNaN(valueTmp)) {
+          alert("x,y,w,h 信息只能输入数字");
+          return;
+        }
+      }
+      console.log(keys, valueTmp);
+      config[keys[0]][keys[1]] = valueTmp;
+      if (dataArr.length > 0) {
+        shengcheng();
+      } else if ($('#dateTextArea').val().length > 6) {
+        loadCsv(0);
+      }
+    })
+
+    //读取海报数据列表
+    function loadCsv(type) {
+      creatType = type
+      var dateTmp = $('#dateTextArea').val()
+      if (dateTmp) {
+        formatDate(dateTmp);
+      } else {
+        alert("请将数据文件拖入,文件格式必须为csv，编码格式utf-8");
+      }
+    }
+    //格式化海报数组
+    function formatDate(data) {
+      var allRows = data.split(/\r?\n|\r/)
+      var table = '<table class="table">'
+      dataArr = [];
+      for (var i = 0; i < allRows.length; i++) {
+        if (allRows[i] != '') {
+          var rowCells = allRows[i].split(',');
+          //去掉头尾的空格
+          for (var j = 0; j < rowCells.length; j++) {
+            var strTmp = "";
+            rowCells[j] == rowCells[j].trim();
+            strTmp += rowCells[j];
+          }
+          //检查空行
+          if (strTmp == "") {
+            if (i == 0) {
+              alert("文件第一行不能为空");
+              return;
+            } else {
+              continue;
+            }
+          }
+          if (i == 0) { //第一行定义名字
+            headNames = rowCells;
+            for (var j = 0; j < rowCells.length; j++) {
+              if (!headNamesVp[headNames[j]]) {
+                //不在重要字段列表内
+                if (!config[rowCells[j]]) {
+                  //配置文件内无此项，增加新的配置项
+                  config[rowCells[j]] = {
+                    font: "italic bolder 55px arial",
+                    color: "#000",
+                    x: 300,
+                    y: 300
+                  }
+                }
+              }
+            }
+          } else {
+            var m = {};
+            for (var j = 0; j < rowCells.length; j++) {
+              //固定参数
+              if (headNamesVp[headNames[j]]) {
+                m[headNamesVp[headNames[j]]] = rowCells[j];
+              } else {
+                //附加参数
+                m[headNames[j]] = rowCells[j];
+              }
+
+            }
+            //数据异常提示
+            // for (var key in headNamesVp) {
+            //   if (!m[headNamesVp[key]]) {
+            //     alert("第" + i + "行缺少【" + key + "】");
+            //     return;
+            //   }
+            // }
+            dataArr.push(m);
+          }
+
+          //拼列表dom
+          if (i === 0) {
+            table += '<thead>';
+            table += '<tr>';
+            table += '<th width="80">序号</th>';
+          } else {
+            table += '<tr>';
+            table += '<td>' + i + '</td>';
+          }
+          for (var rowCell = 0; rowCell < rowCells.length; rowCell++) {
+            if (i === 0) {
+              table += '<th>'
+              table += rowCells[rowCell]
+              table += '</th>'
+            } else {
+              table += '<td>'
+              table += rowCells[rowCell]
+              table += '</td>'
+            }
+          }
+          if (i === 0) {
+            table += '</tr>'
+            table += '</thead>'
+            table += '<tbody>'
+          } else {
+            table += '</tr>'
+          }
+        }
+      }
+      table += '</tbody>'
+      table += '</table>'
+      $('.table').remove()
+      $('body').append(table);
+      $('.funcBtn').attr('disabled', true)
+      initConfigDiv();
+      shengcheng();
+    }
+    //合成海报图片
+    function hechengHBImg(i, isDownload) {
+      var item = dataArr[i];
+      let haibaoImgSrc = '';
+      // 画布区域
+      let c = document.createElement('canvas');
+      let ctx = c.getContext('2d');
+      let img = new Image(); // 背景
+      let img2 = new Image(); // 二维码
+      let img3 = new Image(); // 二维码logo
+      img.setAttribute('crossOrigin', 'Anonymous');
+      img2.setAttribute('crossOrigin', 'Anonymous');
+      img3.setAttribute('crossOrigin', 'Anonymous');
+
+      if (item.qrcode) {
+        $('#qrcode').empty();
+        $('#qrcode').qrcode({
+          render: 'canvas', //渲染方式有table方式（IE兼容）和canvas方式
+          width: '800', //宽度
+          height: '800', //高度
+          text: item.qrcode, //内容
+          typeNumber: -1, //计算模式
+          correctLevel: 3, //二维码纠错级别
+          background: config.qrcode.color, //背景颜色
+          foreground: config.qrcode.bgcolor //二维码颜色
+        });
+
+        if (creatType == 0) {
+          c.width = 750
+          c.height = 1334
+
+          img.onload = () => {
+
+            c.width = img.width
+            c.height = img.height
+            ctx.rect(0, 0, c.width, c.height)
+            ctx.fillStyle = '#fff'
+            ctx.fill()
+
+            ctx.drawImage(img, 0, 0, c.width, c.height)
+
+            img2.src = $('#qrcode canvas')[0].toDataURL('image/png')
+            img2.onload = () => {
+              // 二维码
+              //ctx.fillStyle = '#fff';
+              //ctx.fillRect(416, 806, 128, 128);
+              ctx.drawImage(img2, config.qrcode.x, config.qrcode.y, config.qrcode.w, config.qrcode.h);
+              img3.src = logoConfig.img
+              img3.onload = () => {
+                ctx.drawImage(img3, logoConfig.x(), logoConfig.y(), logoConfig.w(), logoConfig.h())
+                var lineHeight = 40
+                var offset = 1180
+                // 设置name字体样式
+                ctx.font = config.name.font;
+                ctx.fillStyle = config.name.color;
+                if (config.name.font.indexOf("right") > -1) {
+                  ctx.textAlign = "right";
+                  ctx.fillText(item.name, config.name.x, config.name.y, (config.name.x - 20)) //店名
+                } else if (config.name.font.indexOf("center") > -1) {
+                  ctx.textAlign = "center";
+                  ctx.fillText(item.name, config.name.x, config.name.y, (c.width - 40)) //店名
+                } else {
+                  ctx.textAlign = "left";
+                  ctx.fillText(item.name, config.name.x, config.name.y, (c.width - config.name.x - 20)) //店名
+                }
+                // 设置字体样式,循环所有附加字段
+                for (j = 0; j < headNames.length; j++) {
+                  if (item[headNames[j]] && !headNamesVp[headNames[j]]) {
+                    ctx.font = config[headNames[j]].font;
+                    ctx.fillStyle = config[headNames[j]].color;
+                    if (config[headNames[j]].font.indexOf("right") > -1) {
+                      ctx.textAlign = "right";
+                      ctx.fillText(item.name, config[headNames[j]].x, config[headNames[j]].y, (config[headNames[j]].x - 20)) //店名
+                    } else if (config[headNames[j]].font.indexOf("center") > -1) {
+                      ctx.textAlign = "center";
+                      ctx.fillText(item[headNames[j]], config[headNames[j]].x, config[headNames[j]].y, (c.width - 40)) //店名
+                    } else {
+                      ctx.textAlign = "left";
+                      ctx.fillText(item[headNames[j]], config[headNames[j]].x, config[headNames[j]].y, (c.width - config[headNames[j]].x - 20)) //店名
+                    }
+                    // ctx.fillText(item[headNames[j]], config[headNames[j]].x, config[headNames[j]].y, (c.width -
+                    //   config[headNames[j]].x - 20));
+                  }
+                }
+                if (isDownload) { // 保存生成作品图片
+                  downloadImg(i, c);
+                } else { // 预览生成作品图片
+                  hechengHBImgTest(i, c);
+                }
+              }
+            }
+          }
+          img.onerror = () => {
+            img.src = 'images/bg.jpg'
+          }
+          img.src = 'images/bg.png'
+        } else if (creatType == 1) {
+          let paddingTmp = 20
+          c.width = 800
+          c.height = 800
+
+          ctx.rect(0, 0, c.width, c.height)
+          ctx.fillStyle = '#fff'
+          ctx.fill()
+          img2.src = $('#qrcode canvas')[0].toDataURL('image/png')
+          img2.onload = () => {
+            // 二维码
+            //ctx.fillStyle = '#fff';
+            //ctx.fillRect(416, 806, 128, 128);
+            ctx.drawImage(img2, paddingTmp, paddingTmp, c.width - paddingTmp * 2, c.height - paddingTmp * 2)
+            img3.src = 'images/logo.png'
+            img3.onload = () => {
+              ctx.drawImage(img3, 300, 300, c.width / 4, c.height / 4)
+              // 设置字体样式
+              ctx.font = "8px 'arial'"
+              ctx.fillStyle = '#666'
+              ctx.fillText(item.name + '_' + item.id, 790, 10)
+              if (isDownload) { // 保存生成作品图片
+                downloadImg(i, c);
+              } else { // 预览生成作品图片
+                hechengHBImgTest(i, c);
+              }
+            }
+          }
+        }
+      } else {
+        if (creatType == 0) {
+          c.width = 750
+          c.height = 1334
+          ctx.rect(0, 0, c.width, c.height)
+          ctx.fillStyle = '#fff'
+          ctx.fill()
+
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            img3.src = logoConfig.img
+            img3.onload = () => {
+              ctx.drawImage(img3, logoConfig.x, logoConfig.y, logoConfig.w, logoConfig.h)
+              var lineHeight = 40
+              var offset = 1180
+              // 设置name字体样式
+              ctx.font = config.name.font //+ fontConfig;
+              ctx.fillStyle = config.name.color;
+              ctx.fillText(item.name, config.name.x, config.name.y, (c.width - config.name.x - 20)) //店名
+
+              // 设置字体样式,循环所有附加字段
+              for (j = 0; j < headNames.length; j++) {
+                if (item[headNames[j]] && !headNamesVp[headNames[j]]) {
+                  ctx.font = config[headNames[j]].font //+ fontConfig;
+                  ctx.fillStyle = config[headNames[j]].color;
+                  ctx.fillText(item[headNames[j]], config[headNames[j]].x, config[headNames[j]].y, (c.width -
+                    config[headNames[j]].x - 20));
+                }
+              }
+              if (isDownload) { // 保存生成作品图片
+                downloadImg(i, c);
+              } else { // 预览生成作品图片
+                hechengHBImgTest(i, c);
+              }
+            }
+          }
+          img.onerror = () => {
+            img.src = 'images/bg.jpg'
+          }
+          img.src = 'images/bg.png'
+        } else { //只生成二维码时无效
+          alert("无二维码数据");
+          $('.funcBtn').attr('disabled', false);
+        }
+      }
+    }
+
+    //创建预览区域
+    function creatImgDiv(i) {
+
+    }
+
+    //生成预览海报图片
+    function shengcheng() {
+      $('#mainRow').empty();
+      hechengHBImg(0, false); //不下载，只预览
+    }
+
+    // 预览生成作品图片
+    function hechengHBImgTest(i, c) {
+      var haibaoImgSrc = c.toDataURL(_fixType(downloadImgType), 1);
+      var htmlTmp = ''
+      htmlTmp += '<div class="col-2">'
+      htmlTmp += '<div class="wrapper-img-box img-box-lg">'
+      htmlTmp += '<img id="img_' + i + '" src="' + haibaoImgSrc + '" title="' + dataArr[i].name + '_' + dataArr[i].id +
+        '">'
+      htmlTmp += '</div>'
+      htmlTmp += '</div>'
+      $('#mainRow').append(htmlTmp);
+      if (dataArr[i + 1] && (i + 1) < 6) { //预览6张
+        hechengHBImg(i + 1, false); //循环预览
+      } else {
+        $('.funcBtn').attr('disabled', false);
+      }
+    }
+
+    //长文本换行标记
+    function findBreakPoint(text, width, context) {
+      let min = 0
+      let max = text.length - 1
+
+      while (min <= max) {
+        let middle = Math.floor((min + max) / 2)
+        let middleWidth = context.measureText(text.substr(0, middle)).width
+        let oneCharWiderThanMiddleWidth = context.measureText(text.substr(0, middle + 1)).width
+        if (middleWidth <= width && oneCharWiderThanMiddleWidth > width) {
+          return middle
+        }
+        if (middleWidth < width) {
+          min = middle + 1
+        } else {
+          max = middle - 1
+        }
+      }
+      return -1
+    }
+    //长文本自动换行功能
+    function breakLinesForCanvas(text, width, font) {
+      let c = document.createElement('canvas')
+      let ctx = c.getContext('2d')
+      let result = []
+      let breakPoint = 0
+
+      if (font) {
+        ctx.font = font
+      }
+
+      while ((breakPoint = findBreakPoint(text, width, ctx)) !== -1) {
+        result.push(text.substr(0, breakPoint))
+        text = text.substr(breakPoint)
+      }
+
+      if (text) {
+        result.push(text)
+      }
+      return result
+    }
+
+    /**
+     * 在本地进行文件保存
+     * @param  {String} data     要保存到本地的图片数据
+     * @param  {String} filename 文件名
+     */
+    var saveFile = function (data, filename) {
+      var dataBuffer = new Buffer(data, 'base64');
+      fs.writeFile(filename, dataBuffer, function (err) {
+        if (err) {
+          alert("保存出错，错误代码：" + err);
+        } else {
+          //保存成功
+        }
+      });
+    }
+
+    /**
+     * 获取mimeType
+     * @param  {String} type the old mime-type
+     * @return the new mime-type
+     */
+    var _fixType = function (type) {
+      type = type.toLowerCase().replace(/jpg/i, 'jpeg')
+      var r = type.match(/png|jpeg|bmp|gif/)[0]
+      return 'image/' + r
+    }
+
+    // $('body').on('click', 'img', function () {
+    //   // 图片导出
+    //   downloadImg(event.target.id)
+    // })
+
+    //下载海报
+    function downloadAll() {
+      $('.funcBtn').attr('disabled', true)
+      hechengHBImg(0, true); //开始下载队列
+    }
+
+    function downloadImg(i, c) {
+      var imgData = c.toDataURL(_fixType(downloadImgType), 1);
+      var itemTmp = dataArr[i];
+      if (itemTmp) {
+        // 加工image data，替换mime type
+        //imgData = imgData.replace(_fixType(type), 'image/octet-stream');
+        imgData = imgData.replace(/^data:image\/\w+;base64,/, "");
+        var fileName = itemTmp.name + '_' + itemTmp.id + '_' + (creatType == 0 ? '海报' : '二维码') + '.' + downloadImgType;
+        var filePath = "download/";
+        fs.writeFile(filePath + fileName, new Buffer.from(
+          imgData, 'base64'), function (err) {
+            if (err) {
+              $('.funcBtn').attr('disabled', false);
+              alert("保存出错，错误代码：" + err);
+            } else {
+              //保存成功
+              $("#downloadTips").html("（" + (i + 1) + "/" + dataArr.length + "）");
+              if (dataArr[i + 1]) {
+                hechengHBImg(i + 1, true);
+              } else {
+                $('.funcBtn').attr('disabled', false)
+                alert('下载完成，请在download文件夹下查看');
+                //$("#downloadTips").html("");
+              }
+            }
+          });
+      } else {
+        alert('出错')
+        $('.funcBtn').attr('disabled', false)
+      }
+    }
+
+
+    // var tmp = ``;
+
+    // var arr = tmp.split("\n");
+    // var rArr = [];
+    // for (var i = 0; i < arr.length; i++) {
+    //   var arrTmp = arr[i].split("\t");
+    //   var signTmp = "";
+    //   for (var j = 1; j < arrTmp.length; j++) {
+    //     if (arrTmp[j] != "") {
+    //       signTmp = arrTmp[j];
+    //     }
+    //   }
+    //   rArr.push(arrTmp[0] + "," + signTmp);
+    // }
+
+    // rArr.join("\r\n");
+  </script>
+</body>
+
+</html>

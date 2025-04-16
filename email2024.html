@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <title>微宠医自动工具</title>
+    <meta http-equiv="keywords" content="email自动发送">
+    <meta http-equiv="description" content="email自动发送">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+</head>
+
+<body>
+    <!-- 头部 开始 -->
+    <div id="qrcode" style="display:none"></div>
+    <div class="header">
+        <div class="header-logo">email自动发送</div>
+        <div class="header-logo"> <button class="btn btn-xs btn-success" type="button" onclick="javascript:connectMain('haibao')"
+            style="margin-right:10px">海报功能</button><button class="btn btn-xs btn-success" type="button" onclick="javascript:connectMain('pic')"
+            style="margin-right:10px">导图功能</button></div>
+        <div class="header-right">
+            <div class="">
+                <p class="user-text">
+                    <button class="btn btn-xs btn-success" type="button" onclick="javascript:connectMain('opendebug')"
+                        style="margin-right:10px">Debug</button>
+                </p>
+                <p class="user-text">
+                    <button class="btn btn-xs btn-success" type="button" onclick="javascript:window.location.reload();"
+                        style="margin-right:10px">刷新</button>
+                </p>
+                <p class="user-text"><button id="viewBtn" class="btn btn-success funcBtn" type="button" onclick="loadCsv(1);"
+                        style="margin-right:10px">预览邮件</button></p>
+                <p class="user-text"><button class="btn btn-danger funcBtn" type="button" onclick="stopSending();"
+                        style="margin-right:10px">停止发送</button></p>
+                <p class="user-text"><button id="sendBtn" class="btn funcBtn" type="button" onclick="sendMailNow(0);"
+                        style="margin-right:10px" disabled>开始自动发送</button></p>
+            </div>
+        </div>
+    </div>
+    <!-- 头部 结束 -->
+    <!-- 正文 开始 -->
+    <div id="container">
+        <div class="row" id="textInfo">
+            <div class="col-3" style="padding: 10px">
+                合作医院<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="1030 家">
+            </div>
+            <div class="col-3" style="padding: 10px">
+                宠主数量<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="23596 人">
+            </div>
+            <div class="col-3" style="padding: 10px">
+                累计分润<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="193776 元">
+            </div>
+            <div class="col-3" style="padding: 10px">
+                截至：<input type="text" rows="6" style="width:100%;overflow-y:scroll;" placeholder="2018年10月31">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div id="holder" class="col-12" style="padding: 10px">
+            <textarea id="dateTextArea" type="textarea" rows="6" style="width:100%;overflow-y:scroll;" placeholder="请将数据文件（excel，csv）拖入此处。数据实例（表头名称不能变，列顺序可以换）：
+            店铺mdm号,平台店铺名称,email,订单时间,订单种类,订单详情,数量,订单金额,分润金额,支付方式,账户名称,账号,开户行,联系人,店铺地址,联系电话,负责销售
+1,平台店铺名称1,7833251@qq.com,订单时间1,订单种类1,订单详情1,数量1,订单金额1,111,支付方式1,账户名称1,账号1,开户行1,联系人1,店铺地址1,联系电话1,负责销售1
+2,平台店铺名称2,caolulu@dajiashequ.com,订单时间2,订单种类2,订单详情2,数量2,订单金额2,222,支付方式2,账户名称2,账号2,开户行2,联系人2,店铺地址2,联系电话2,负责销售2"></textarea>
+        </div>
+    </div>
+    <div class="col-6">
+    </div>
+    <div id="mainRow" class="row">
+    </div>
+    </div>
+    <!-- 正文 结束 -->
+    <!-- modal修改密码 小版 结束-->
+    <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+    <script>
+        if (typeof module === 'object') {
+            window.jQuery = window.$ = module.exports;
+        }; //解决jquery的兼容性
+    </script>
+    <script type="text/javascript" src="js/jquery.qrcode.min.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <script type="text/javascript" src="js/d3.custom.min.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+    <script type="text/javascript">
+        //表头字段数组
+        var headNames = [];
+        //重要表头字段
+        var headNamesVp = { //店铺mdm号 平台店铺名称 email
+            "平台店铺名称": "name",
+            "店铺mdm号": "id",
+            "email": "email"
+        };
+        //店铺mdm号 平台店铺名称 email 订单时间 订单种类 订单详情 数量 订单金额 分润金额 支付方式 账户名 账号 开户行 联系人 店铺地址 联系电话 负责销售
+
+        var obj_shop = "";
+        var obj_shop_ids = "";
+        var stopFlag = false;
+        var mailStyle =
+            `<style>
+.shop-table {
+  color: #404040;
+  margin: 0 auto;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+.shop-table tbody tr:nth-of-type(even) {
+    background-color: #E6F2E6
+}
+.shop-table tbody tr {
+	color: #404040;
+  border-bottom: rgb(168, 235, 168) solid 1px;
+  vertical-align: middle;
+	white-space: nowrap;
+	font-size: 14px;
+	font-weight: 400;
+	font-style: normal;
+	text-decoration: none;
+}
+.shop-table .thead-g td {
+    height:35px;
+    background: #376B36;
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+td {
+    font-family: "lucida Grande",Verdana,"Microsoft YaHei";
+    font-size: 12px;
+    -webkit-font-smoothing: subpixel-antialiased;
+	padding: 5px 10px;
+	border: none;
+}
+.border-b-g {
+	border-bottom: 2px solid #376B36;
+}
+.text-r {
+	text-align: right !important;
+}
+.text-l {
+	text-align: left !important;
+}
+.text-c {
+	text-align: center !important;
+}
+
+.text-b td {
+	font-size: 18px;
+	font-weight: 700;
+}
+.xl80 {
+	background: #F2B800;
+	color: #FFFFFF;
+	border-top: 2px solid #C09200;
+}
+.xl81 {
+  font-style: italic;
+	background: #F2B800;
+	color: #FFFFFF;
+	border-bottom: 2px solid #C09200;
+}
+
+.xl91 {
+	background: #ddd;
+}
+
+.xl94 {
+	color: #555;
+	font-style: italic;
+	border-top: 1px solid #888;
+	border-bottom: 1px solid #888;
+}
+
+.xl95 {
+	background: #E6F2E6;
+	border-bottom: 1px solid #888;
+}
+
+</style>`;
+        var mailTop = ``;
+        var mailBottom = ``;
+
+        //mail配置
+        var nodemailer = require("nodemailer");
+        var smtpTransport = require('nodemailer-smtp-transport');
+        var wellknown = require('nodemailer-wellknown');
+        //var config = wellknown("QQ");
+
+        var mailAuth263 = {
+            user: 'weichongyi-info@dajiashequ.com',
+            pass: 'weichongyi123456'
+        }
+
+        var smtpConfig = {
+            host: 'smtp.263.net',
+            port: 25,
+            secure: false, // upgrade later with STARTTLS
+            auth: mailAuth263
+        };
+
+        var poolConfig = {
+            pool: true,
+            host: 'smtp.263.net',
+            port: 25,
+            secure: true, // use TLS
+            auth: mailAuth263
+        };
+
+        var transporter = nodemailer.createTransport(smtpTransport(smtpConfig));
+
+        var mailOptions = {
+            from: "微宠医<weichongyi-info@dajiashequ.com>",
+            to: "",
+            subject: "",
+            text: "",
+            html: ""
+        };
+
+        function stopSending() {
+            stopFlag = true;
+        }
+
+        function loadCsv(type) {
+            var dateTmp = $("#dateTextArea").val();
+            if (dateTmp) {
+                formatDate(dateTmp);
+            } else {
+                alert("请将数据文件拖入,文件格式必须为csv，编码格式utf-8");
+            }
+        }
+
+        function formatDate(data) {
+            var allRows = data.split(/\r?\n|\r/);
+            dataArr = [];
+            if (allRows.length < 2 || !$("#textInfo input")[0].value || !$("#textInfo input")[1].value || !$(
+                    "#textInfo input")[2].value || $("#textInfo input")[3].value.length < 8) {
+                alert("队列为空或缺少参数");
+                return;
+            }
+            for (var i = 0; i < allRows.length; i++) {
+                if (allRows[i] != '') {
+                    var rowCells = allRows[i].split(',');
+                    //去掉头尾的空格
+                    for (var j = 0; j < rowCells.length; j++) {
+                        var strTmp = "";
+                        rowCells[j] == rowCells[j].trim();
+                        strTmp += rowCells[j];
+                    }
+                    //检查空行
+                    if (strTmp == "") {
+                        if (i == 0) {
+                            alert("文件第一行不能为空");
+                            return;
+                        } else {
+                            continue;
+                        }
+                    }
+                    //检查数据源长度
+                    if (rowCells.length < 17) {
+                        alert("第" + i + "行数据不全，请检查数据源");
+                        return false;
+                    }
+                    if (i == 0) { //第一行定义名字
+                        headNames = rowCells;
+                    } else {
+                        var m = {};
+                        for (var j = 0; j < rowCells.length; j++) {
+                            //固定参数
+                            if (headNamesVp[headNames[j]]) {
+                                m[headNamesVp[headNames[j]]] = rowCells[j];
+                            } else {
+                                //附加参数
+                                m[headNames[j]] = rowCells[j];
+                            }
+                        }
+                        //数据异常提示
+                        for (var key in headNamesVp) {
+                            if (!m[headNamesVp[key]]) {
+                                alert("第" + i + "行缺少【" + key + "】");
+                                return;
+                            }
+                        }
+                        dataArr.push(m);
+                    }
+                }
+            }
+            shengcheng();
+        }
+
+        function shengcheng() {
+            $("#mainRow").empty();
+
+            obj_shop = d3.nest()
+                .key(function (d) {
+                    return d.id;
+                })
+                .map(dataArr, d3.map);
+
+            obj_shop_ids = obj_shop.keys();
+
+            if (obj_shop_ids.length > 0) {
+                viewMailNow(0);
+            } else {
+                $(".funcBtn").attr("disabled", false);
+                alert("队列为空");
+            }
+        }
+
+        function viewMailNow(keyid) {
+            var shopArr = obj_shop["$" + obj_shop_ids[keyid]];
+
+            creatShopDiv(obj_shop_ids[keyid], buildMail(shopArr));
+            if (obj_shop_ids[keyid + 1]) {
+                viewMailNow(keyid + 1);
+            } else {
+                $.tips({
+                    msg: "预览完成，共 " + (keyid + 1) + " 封店铺邮件"
+                });
+                $("#sendBtn").attr("disabled", false);
+                $("#sendBtn").html("开始发送(" + obj_shop_ids.length + ")");
+            }
+        }
+
+        function viewMailNowByID(dom) {
+            var id = $(dom).attr("id").replace("div_", "");
+            var shopArr = obj_shop["$" + id];
+            if ($(dom).find(".mailContent").length == 0) {
+                $(dom).append("<div class='mailContent'>" + buildMail(shopArr) + "</div>");
+            } else {
+                $(dom).find(".mailContent").remove();
+            }
+        }
+
+
+        function buildMail(shopArr) {
+            var riqiTmp = $("#textInfo input")[3].value;
+            riqiTmp = riqiTmp.replace("年", "/");
+            riqiTmp = riqiTmp.replace("月", "/");
+            riqiTmp = riqiTmp.split("/")[1];
+            var mailTop =
+                `<table class="shop-table" border="0" cellpadding="0" cellspacing="0">
+    <thead>
+      <tr>
+        <td colspan="7">&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="7"><img height="50px" src="http://s8.sinaimg.cn/middle/0076C5y3zy7oZaNMVoj57&690"><img height="50px"
+            style="float:right;" src="http://s9.sinaimg.cn/middle/0076C5y3zy7p0Te35KUd8&690"></td>
+      </tr>
+      <tr class="text-b" style='height:60px'>
+        <td colspan="7">微宠医平台整体业绩分享报告——皇家宠物食品唯一官方授权处方粮在线售卖中心</td>
+      </tr>
+      <tr style='height:35px;' class="xl80 text-b">
+        <td colspan="3" class="text-l">
+            合作医院数&nbsp; &nbsp;${$("#textInfo input")[0].value}&nbsp;家
+        </td>
+        <td colspan="1" class="text-c">
+            宠主新入驻量&nbsp; &nbsp;${$("#textInfo input")[1].value}&nbsp;人
+        </td>
+        <td colspan="3" class="text-r">
+          平台共计分润数&nbsp; &nbsp;${$("#textInfo input")[2].value}&nbsp;元
+        </td>
+      </tr>
+      <tr style='height:20px;' class="xl81">
+        <td colspan="7" class="text-r">截至  ${$("#textInfo input")[3].value}</td>
+      </tr>
+      <tr class="text-b" style='height:40px;'>
+        <td>${riqiTmp}月</td>
+        <td colspan="6">${shopArr[0].name}对账单</td>
+      </tr>
+      <tr style='height:30px;'>
+        <td class="border-b-g" colspan="3"><b>收款方</b></td>
+        <td></td>
+        <td class="border-b-g" colspan="3"><b>平台店铺信息</b></td>
+      </tr>
+      <tr>
+        <td class="xl94">店铺mdm号：</td>
+        <td class="xl91" colspan="2">${shopArr[0].id}</td>
+        <td></td>
+        <td class="xl94">联系人：</td>
+        <td class="xl95" colspan="2">${shopArr[0]["联系人"]}</td>
+      </tr>
+      <tr>
+        <td class="xl94">支付方式：</td>
+        <td class="xl91"  colspan="2">${shopArr[0]["支付方式"]}</td>
+        <td></td>
+        <td class="xl94">平台店铺名称：</td>
+        <td class="xl95" colspan="2">${shopArr[0].name}</td>
+      </tr>
+      <tr>
+        <td class="xl94">账户名：</td>
+        <td class="xl91" colspan="2">${shopArr[0]["账户名称"]}</td>
+        <td></td>
+        <td class="xl94">店铺地址：</td>
+        <td class="xl95" colspan="2">${shopArr[0]["店铺地址"]}</td>
+
+      </tr>
+      <tr>
+        <td class="xl94">账号：</td>
+        <td class="xl91 " colspan="2">${shopArr[0]["账号"]}</td>
+        <td></td>
+        <td class="xl94">联系电话：</td>
+        <td class="xl95" colspan="2" >${shopArr[0]["联系电话"]}</td>
+      </tr>
+      <tr>
+        <td class="xl94">开户行：</td>
+        <td class="xl91 " colspan="2">${shopArr[0]["开户行"]}</td>
+        <td></td>
+        <td class="xl94">负责销售：</td>
+        <td class="xl95" colspan="2">${shopArr[0]["负责销售"]}</td>
+      </tr>
+      <tr>
+          <td>&nbsp;</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="thead-g">
+        <td class="text-l">NO</td>
+        <td class="text-c">订单时间</td>
+        <td class="text-c">订单种类</td>
+        <td class="text-c">订单详情</td>
+        <td class="text-r">数量</td>
+        <td class="text-r">订单金额</td>
+        <td class="text-r">分润金额</td>
+      </tr>`;
+
+            var mailBottom =
+                `</tbody>
+    <tfoot style="text-align:center;background-color: #ddd">
+      <tr>
+        <td colspan="7" style="background-color: #fff">&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="7">&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="7">第三方支付公司：北京慧友云商科技有限公司</td>
+      </tr>
+      <tr>
+        <td colspan="7">发票邮寄地址：北京市海淀区西直门北大街甲43号1号楼1层103A 财务部收</td>
+      </tr>
+      <tr>
+        <td colspan="7">客服电话：010-63659941</td>
+      </tr>
+      <tr>
+        <td colspan="7">服务邮件：weichongyi-info@dajiashequ.com</td>
+      </tr>
+      <tr>
+        <td colspan="7">&nbsp;</td>
+      </tr>
+    </tfoot>
+  </table>`
+            // var htmlTmp = "<p>" + shopArr[0].name + mailOptions.subject + "</p>";
+            // htmlTmp += "<p>" + mailOptions.text + "</p>";
+            var htmlTmp = mailStyle + mailTop;
+            var heji = 0;
+            for (var i = 0; i < shopArr.length; i++) {
+                //订单时间 订单种类 订单详情 数量 订单金额 分润金额
+                htmlTmp += "<tr><td class='text-l'>" + (i + 1) + "</td>";
+                htmlTmp += "<td class='text-l'>" + shopArr[i]["订单时间"] + "</td>";
+                htmlTmp += "<td class='text-l'>" + shopArr[i]["订单种类"] + "</td>";
+                htmlTmp += "<td>" + shopArr[i]["订单详情"] + "</td>";
+                htmlTmp += "<td class='text-r'>" + shopArr[i]["数量"] + "</td>";
+                htmlTmp += "<td class='text-r'>" + shopArr[i]["订单金额"] + "</td>";
+                htmlTmp += "<td class='text-r'>" + shopArr[i]["分润金额"] + "</td></tr>";
+                heji += Number(shopArr[i]["分润金额"].replace("￥", ""));
+            }
+            htmlTmp += "<tr class='thead-g'><td class='text-l' colspan='6'>合计</td>";
+            htmlTmp += "<td class='text-r'>￥ " + heji + "</td></tr>";
+            htmlTmp += mailBottom;
+            return htmlTmp;
+        }
+
+        function sendMailNow(keyid) {
+            $("#sendBtn").attr("disabled", true);
+            $("#viewBtn").attr("disabled", true);
+            var shopArr = obj_shop["$" + obj_shop_ids[keyid]];
+            var htmlTmp = buildMail(shopArr);
+
+            mailOptions.to = shopArr[0].email;
+            mailOptions.subject = shopArr[0].name + "-微宠医平台整体业绩分享报告";
+            mailOptions.text = mailOptions.text;
+            mailOptions.html = htmlTmp;
+
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    alert("【发送出错】店名" + shopArr[0].name + "，email地址：" + shopArr[0].email + "，错误原因：" + error);
+                    //$(".funcBtn").attr("disabled", false);
+                    //return console.log(error);
+                    $("#div_" + obj_shop_ids[keyid]).addClass("isNotSend");
+                    $("#div_" + obj_shop_ids[keyid] + " .sendTips").html($("#div_" + obj_shop_ids[keyid] +
+                        " .sendTips").html().replace("【预览】", "【发送失败】"))
+                } else {
+                    $("#div_" + obj_shop_ids[keyid]).addClass("isSend");
+                    $("#div_" + obj_shop_ids[keyid] + " .sendTips").html($("#div_" + obj_shop_ids[keyid] +
+                        " .sendTips").html().replace("【预览】", "【已发送】"))
+                }
+                if (obj_shop_ids[keyid + 1] && !stopFlag) {
+                    setTimeout(function () {
+                        sendMailNow(keyid + 1);
+                    }, 500);
+                    $("#sendBtn").html("发送(" + (keyid + 1) + "/" + obj_shop_ids.length + ")");
+                } else {
+                    if (stopFlag) {
+                        $.tips({
+                            msg: "已经停止发送"
+                        });
+                    } else {
+                        $.tips({
+                            msg: "发送完成"
+                        });
+                    }
+                    $("#sendBtn").html("发送(" + (keyid + 1) + "/" + obj_shop_ids.length + ")");
+                    $("#viewBtn").attr("disabled", false);
+                }
+                console.log('Message sent: ' + info.response);
+            });
+        }
+
+        function creatShopDiv(id, html) {
+            var htmlTmp = "";
+            htmlTmp += '<div id="div_' + id + '" class="col-12" onclick=viewMailNowByID(this)>';
+            htmlTmp += "<p class='sendTips'>【预览】店名：" + obj_shop["$" + id][0].name + "(" + obj_shop["$" + id][0].id +
+                ")，email地址：" + obj_shop["$" + id][0]
+                .email + "<span class='panel-btns'>【点击查看详情】</span></p>";
+            //只显示3条预览
+            if ($(".mailContent").length < 1) {
+                htmlTmp += "<div class='mailContent'>" + html + "</div>";
+            }
+            // htmlTmp += '<img id="img_' + i + '" src="">';
+            // htmlTmp += '</div>';
+            htmlTmp += '</div>';
+            $("#mainRow").append(htmlTmp);
+        }
+    </script>
+</body>
+
+</html>

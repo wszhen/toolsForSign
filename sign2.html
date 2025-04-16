@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="renderer" content="webkit" />
+  <title>获取签名报备数据(查询全部，慎用)</title>
+  <meta http-equiv="keywords" content="获取签名报备数据" />
+  <meta http-equiv="description" content="获取签名报备数据" />
+  <link rel="stylesheet" type="text/css" href="css/index.css" />
+</head>
+
+<body>
+  <!-- 头部 开始 -->
+  <div class="header">
+    <div class="header-logo">获取签名报备数据(查询全部，慎用)</div>
+    <div class="header-right">
+      <p class="user-text" style="margin-right:30px"><button class="btn funcBtn" type="button"
+          onclick="checkDateStart();">校验数据<span id="checkDateBtn"></span></button></p>
+      <p class="user-text"><input id="sdate"
+          style="height: 30px;color: #000000;width: 80px;border-radius: 4px;text-align: center;margin-right:10px;"
+          type="text" value="2024-08-20" placeholder="开始">至
+        <input id="edate"
+          style="height: 30px;color: #000000;width: 80px;border-radius: 4px;text-align: center;margin-right:10px;margin-left:10px;"
+          type="text" value="2024-08-23" placeholder="截至">
+      </p>
+      <p class="user-text"><button class="btn funcBtn" style="margin-right:30px" type="button"
+          onclick="getDateStartP();">获取任务数据<span id="downloadTips"></span></button></p>
+      <p class="user-text">
+        <button class="btn btn-xs btn-success" type="button" onclick="javascript:connectMain('opendebug')"
+          style="margin-right:10px">Debug</button>
+      </p>
+      <p class="user-text">
+        <button class="btn btn-xs btn-success" type="button" onclick="javascript:window.location.reload();"
+          style="margin-right:10px">刷新</button>
+      </p>
+      <p class="user-text"><button class="btn funcBtn" type="button" onclick="getDateStart();">获取数据<span
+            id="downloadTips"></span></button></p>
+    </div>
+  </div>
+  <!-- 头部 结束 -->
+  <!-- 正文 开始 -->
+  <div id="container">
+    <div class="row" id="textInfo">
+      <div class="col-2" style="padding: 10px">
+        账号<input id="zhanghao" type="text" style="width:100%;overflow-y:scroll;" value="15863019860"
+          placeholder="15863019860 青岛，13791396353 烟台">
+      </div>
+      <div class="col-3" style="padding: 10px">
+        csrftoken<input id="csrftoken" type="text" style="width:100%;overflow-y:scroll;" value=""
+          placeholder="localStorage内">
+      </div>
+      <div class="col-3" style="padding: 10px">
+        loginToken<input id="loginToken" type="text" style="width:100%;overflow-y:scroll;" value=""
+          placeholder="cookie内">
+      </div>
+      <div class="col-1" style="padding: 10px">
+        limitpage<input id="limitpage" type="text" style="width:100%;overflow-y:scroll;" value="3" placeholder="">
+      </div>
+      <div class="col-1" style="padding: 10px">
+        startPage<input id="startPage" type="text" style="width:100%;overflow-y:scroll;" value="1" placeholder="">
+      </div>
+      <div class="col-1" style="padding: 10px">
+        分页条数<input id="pageSize" type="text" style="width:100%;overflow-y:scroll;" value="500" placeholder="">
+      </div>
+      <!-- <div class="col-2" style="padding: 10px">
+        地区<input id="region" type="text" style="width:100%;overflow-y:scroll;" placeholder="空 全部,532青岛,535烟台">
+      </div> -->
+      <div class="col-1" style="padding: 10px">
+        状态<input id="status" type="text" style="width:100%;overflow-y:scroll;" placeholder="空 全部,0待归档,1成功,2失败,3回退">
+      </div>
+    </div>
+    <div class="row">
+      <!-- <iframe width=100%; height=500px;
+        src="https://www.sd.10086.cn/newesopcentralapp/v2/#/selfservice/web/selflogin"></iframe> -->
+      <div id="resultDiv" class="col-12" style="padding: 10px;">
+        <textarea id="infoArea" type="textarea" rows="20" style="width:100%;overflow-y:scroll;" placeholder=''
+          disabled></textarea><br>
+        <textarea id="dateTextArea" type="textarea" rows="20" style="width:100%;overflow-y:scroll;"
+          placeholder=''></textarea>
+        <div style="float: right;"><button class="btn funcBtn" type="button" onclick="save();">保存文件</button></div>
+      </div>
+    </div>
+    <div id="mainRow" class="row"></div>
+  </div>
+  <!-- 正文 结束 -->
+  <!-- modal修改密码 小版 结束 -->
+  <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+  <script>
+    if (typeof module === 'object') {
+      window.jQuery = window.$ = module.exports
+    } //解决jquery的兼容性
+  </script>
+  <script type="text/javascript" src="js/jquery.qrcode.min.js"></script>
+  <script type="text/javascript" src="js/index.js"></script>
+  <script type="text/javascript">
+
+    // 使用此页面方法:    
+    //location.href = location.href.replace("sign","sign2")
+
+    // //初始配置
+    // var zhanghao = "15863019860"; //15863019860 青岛，13791396353 烟台
+    // var region = "532";  //532 青岛  ，535 烟台 , 空 全部
+    // var pageSize = "10"; //每页数据条数
+    // var status = "1";  // 0 待归档， 1 成功， 2 失败，3 回退 ，空 全部
+    // //var csrftoken = JSON.parse(localStorage.selfservice_csrftoken).data;
+    // var csrftoken = "3F9B7B53FE411AF36D32391E93B372FBB8DE4AD39D60EA1332C0844E32916E4D";
+    // var loginToken = "085FBC5ED438087E0FCE4D30B1591E8692F7560D6DB316F73249EC364FF67B9F";  //cookie中找
+
+    $("#csrftoken").val(localStorage.getItem("csrftoken"));
+    $("#loginToken").val(localStorage.getItem("loginToken"));
+
+    var zhanghao = ""; //15863019860 青岛，13791396353 烟台
+    var csrftoken = "";
+    var loginToken = "";  //cookie中找
+    var limitpage = "";
+    var startPage = "";
+    var pageSize = ""; //每页数据条数
+    var region = "";  //532 青岛  ，535 烟台 , 空 全部
+    var regionStr = "";
+    var status = "";  // 0 待归档， 1 成功， 2 失败，3 回退 ，空 全部
+    //var csrftoken = JSON.parse(localStorage.selfservice_csrftoken).data;
+    var dataTmp = [];
+    var dataTmpP = [];
+    var dataTmpPL = []; //任务列表
+
+    var subArrTmp = []; // 子端口号列表
+
+    var sdate = "";
+    var edate = "";
+
+    function fixDate(arrTmp) {
+      for (var i = 0; i < arrTmp.length; i++) {
+        var strTmp =
+          // ((new Date(arrTmp[i].statusDate) - new Date(arrTmp[i].createDate)) / 3600000).toFixed(2) + "," +
+          // arrTmp[i].createDate + "," +
+          arrTmp[i].statusDate + "," +
+          arrTmp[i].masterPort + "," +
+          arrTmp[i].subPort + "," +
+          arrTmp[i].portUnitName + "," +
+          arrTmp[i].submitUnit + "," +
+          arrTmp[i].corpSign + "," +
+          arrTmp[i].region + "," +
+          arrTmp[i].accessCity + "," +
+          arrTmp[i].agentCreateTel + "," +
+          arrTmp[i].status;
+        //dataTmp += strTmp + "\r\n";
+        //for (var j = 0; j < Object.keys(dataTmp).length; j++) {
+        if (dataTmp["s" + arrTmp[i].subPort]) {
+          if (arrTmp[i].statusDate > dataTmp["s" + arrTmp[i].subPort].split(",")[0]) {
+            $("#infoArea").val($("#infoArea").val() + new Date() + " 去重(去掉)：" + dataTmp["s" + arrTmp[i].subPort] + "\r\n");
+            $("#infoArea").val($("#infoArea").val() + new Date() + " 较新(保留)：" + strTmp + "\r\n");
+            dataTmp["s" + arrTmp[i].subPort] = strTmp;
+          } else {
+            $("#infoArea").val($("#infoArea").val() + new Date() + " 去重(去掉)：" + strTmp + "\r\n");
+            $("#infoArea").val($("#infoArea").val() + new Date() + " 已有(保留)：" + dataTmp["s" + arrTmp[i].subPort] + "\r\n");
+          }
+        } else {
+          dataTmp["s" + arrTmp[i].subPort] = strTmp;
+        }
+        //}
+      }
+      console.log(dataTmp);
+      return dataTmp;
+    }
+
+    function getDate(qryPage, isOnetime) {
+      $("#infoArea").val($("#infoArea").val() + new Date() + " 正在获取第: " + qryPage + " 页数据 / 已获取数据：" + Object.keys(dataTmp).length + "条" + "\r\n");
+      var url = "https://www.sd.10086.cn/esopappservice/commonService/openEbus/commonTransRequest?method=QryGrpMASPortRealName";
+      request({
+        url: url,
+        method: "POST",
+        //json: true,
+        headers: {
+          "cookie": "loginToken=" + loginToken,
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+          "content-type": "application/json;charset=UTF-8",
+          "csrftoken": csrftoken,
+          "region": region,
+          "sec-ch-ua": "\"Chromium\";v=\"124\", \"Microsoft Edge\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+        },
+        // referrer: "https://www.sd.10086.cn/newesopcentralapp/v2/",
+        // referrerPolicy: "strict-origin-when-cross-origin",
+        body: "{\"inParams\":{\"groupId\":\"\",\"region\":\""
+          + region + "\",\"masterPort\":\"\",\"subPort\":\"\",\"portUnitName\":\"\",\"groupSign\":\"\",\"submitUnit\":\"\",\"status\":\""
+          + 1 + "\",\"operid\":\"000000yd\",\"qryType\":\"\",\"qryByOperRight\":\"\",\"agentCreateTel\":\""
+          + "" + "\",\"qryPage\":"
+          + qryPage + ",\"pageSize\":"
+          + pageSize + "},\"toRegion\":\""
+          + region + "\",\"strRegion\":\""
+          + region + "\"}",
+      }, function (error, response, body) {
+        //console.log(body);
+        //console.log(response);
+        if (!error && response.statusCode == 200) {
+          //console.log(body); // 请求成功的处理逻辑
+          //console.log("qryPage:" + qryPage);
+          localStorage.setItem("csrftoken", csrftoken);
+          localStorage.setItem("loginToken", loginToken);
+          var s = JSON.parse(body);
+          if (s.retCode == 0) {
+            var arrTmp = s.result.realNameList;
+            fixDate(arrTmp);
+            $("#dateTextArea").val(dataTostring(dataTmp));
+            if (qryPage * pageSize >= s.result.resultSize || qryPage >= limitpage) {
+              if (startPage == "1" && limitpage != "1") {
+                getDate(1, true);
+                console.log("全部完成：" + qryPage + " 页 / " + Object.keys(dataTmp).length + "条");
+                $("#infoArea").val($("#infoArea").val() + new Date() + " 正在补全第1页数据..." + "\r\n");
+              } else {
+                console.log("全部完成：" + qryPage + " 页 / " + Object.keys(dataTmp).length + "条");
+                $("#infoArea").val($("#infoArea").val() + new Date() + " 全部完成：" + qryPage + " 页 / " + Object.keys(dataTmp).length + "条" + "\r\n");
+              }
+            } else {
+              if (isOnetime) {
+                console.log("补全完成：共" + Object.keys(dataTmp).length + "条");
+                $("#infoArea").val($("#infoArea").val() + new Date() + " 补全完成：共" + Object.keys(dataTmp).length + "条" + "\r\n");
+              } else {
+                qryPage++;
+                getDate(qryPage);
+              }
+            }
+          } else {
+            dataTmp = [];
+            console.log("error：" + s.retMsg);
+            $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + s.retMsg + "\r\n");
+            //$("#infoArea").val("error" + s.retMsg);
+          }
+        } else {
+          console.log("error:" + error);
+          $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + error + "\r\n");
+        }
+      });
+    }
+
+    function dataTostring(dataObj) {
+      var strTmp = "";
+      for (var i in dataObj) {
+        strTmp += dataObj[i] + "\r\n";
+      }
+      return strTmp;
+    }
+    //match 数字
+    //var str = '123sdfsdf456sdffs789'
+    //var numArr = str.match(/\d+/g)
+    // 写xlsx
+    // var buffer = xlsx.build(data);
+    // fs.writeFile('./resut.xls', buffer, function (err) {
+    //   if (err)
+    //     throw err;
+    //   console.log('Write to xls has finished');
+
+    //   // 读xlsx
+    //   var obj = xlsx.parse("./" + "resut.xls");
+    //   console.log(JSON.stringify(obj));
+    // });
+
+
+    //数据整理
+    function getDateStart() {
+      dataTmp = [];
+      dataTmpP = [];
+      dataTmpPL = [];
+      $("#infoArea").val("");
+
+      zhanghao = $("#zhanghao").val(); //15863019860 青岛，13791396353 烟台
+      csrftoken = $("#csrftoken").val();
+      loginToken = $("#loginToken").val();  //cookie中找
+      limitpage = $("#limitpage").val();
+      startPage = $("#startPage").val();
+      pageSize = $("#pageSize").val(); //每页数据条数
+      //region = $("#region").val();  //532 青岛  ，535 烟台 , 空 全部
+      status = $("#status").val();  // 0 待归档， 1 成功， 2 失败，3 回退 ，空 全部
+
+      if (zhanghao == "15863019860") {
+        region = "532";
+        regionStr = "青岛"
+      }
+      else if (zhanghao == "13791396353") {
+        region = "535";
+        regionStr = "烟台"
+      } else {
+        return false;
+        alert("账号信息错误");
+      }
+      getDate(startPage);
+    }
+
+    function save() {
+      var dateTime = new Date();
+      var year = dateTime.getFullYear();
+      var month = dateTime.getMonth() + 1;
+      var day = dateTime.getDate();
+      if (Object.keys(dataTmp).length > 0) {
+        let csv = dataTostring(dataTmp);//csv数据
+        var pathTmp = path.join(__dirname, regionStr + "_" + year + month + day + "_" + Object.keys(dataTmp).length + '.csv');
+        fs.writeFile(pathTmp, `\ufeff${csv}`, {
+          encoding: 'utf-8'
+        }, err => {
+          if (err) {
+            alert("保存出错，错误代码：" + err);
+          } else {
+            //保存成功
+            alert("保存成功: " + pathTmp);
+          }
+        })
+      } else if (dataTmpP.length > 0) {
+        let csv = dataTmpP.join("\r\n");//csv数据
+        var pathTmp = path.join(__dirname, regionStr + "_" + sdate + "至" + edate + "_" + Object.keys(dataTmpP).length + "_任务" + '.csv');
+        fs.writeFile(pathTmp, `\ufeff${csv}`, {
+          encoding: 'utf-8'
+        }, err => {
+          if (err) {
+            alert("保存出错，错误代码：" + err);
+          } else {
+            //保存成功
+            alert("保存成功: " + pathTmp);
+          }
+        })
+      }
+    }
+
+
+    function fixDatePL(arrTmp) {
+      var strTmp = "";
+      for (var i = 0; i < arrTmp.length; i++) {
+        strTmp += arrTmp[i].planExecTime + "," +
+          arrTmp[i].statusDate + "," +
+          arrTmp[i].jobid + "," +
+          arrTmp[i].errMsg + "\r\n";
+      }
+      console.log(strTmp);
+      return strTmp;
+    }
+
+    function fixDateP(arrTmp, jobid) {
+      for (var i = 0; i < arrTmp.length; i++) {
+        var jsonTmp = JSON.parse(arrTmp[i].adddata1);
+        var strTmp =
+          arrTmp[i].statusDate + "," +
+          jsonTmp.masterPort.trim() + "," +
+          jsonTmp.subPort.trim() + "," +
+          jsonTmp.portUnitName + "," +
+          jsonTmp.corpSign.trim() + "," +
+          jsonTmp.accessCity + "," +
+          arrTmp[i].status + "," +
+          jsonTmp.operType + "," +
+          arrTmp[i].remark + "," +
+          jobid;
+
+        dataTmpP.push(strTmp);
+      }
+      console.log(dataTmpP);
+      return dataTmpP;
+    }
+    //获取任务列表数据
+    function getDatePL() {
+      $("#infoArea").val($("#infoArea").val() + new Date() + " 正在获取任务列表数据..." + "\r\n");
+      var url = "https://www.sd.10086.cn/esopappservice/commonService/openEbus/commonTransRequest?method=QryGrpJobList";
+      request({
+        url: url,
+        method: "POST",
+        //json: true,
+        headers: {
+          "cookie": "loginToken=" + loginToken,
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+          "content-type": "application/json;charset=UTF-8",
+          "csrftoken": csrftoken,
+          "region": region,
+          "sec-ch-ua": "\"Chromium\";v=\"124\", \"Microsoft Edge\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+        },
+        // referrer: "https://www.sd.10086.cn/newesopcentralapp/v2/",
+        // referrerPolicy: "strict-origin-when-cross-origin",
+        body: "{\"inParams\":{\"recType\":\"GrpBatchSJDKRealName\",\"region\":\""
+          + region + "\",\"operid\":\"000000yd\",\"begindate\":\""
+          + sdate + " 00:00:00" + "\",\"enddate\":\""
+          + edate + " 23:59:59" + "\",\"portProductId\":\""
+          + zhanghao + "\"},\"toRegion\":\""
+          + region + "\",\"strRegion\":\""
+          + region + "\"}",
+      }, function (error, response, body) {
+        //console.log(body);
+        //console.log(response);
+        if (!error && response.statusCode == 200) {
+          //console.log(body); // 请求成功的处理逻辑
+          //console.log("qryPage:" + qryPage);
+          localStorage.setItem("csrftoken", csrftoken);
+          localStorage.setItem("loginToken", loginToken);
+          var s = JSON.parse(body);
+          if (s.retCode == 0) {
+            dataTmpPL = s.result.joblist;
+            $("#infoArea").val($("#infoArea").val() + new Date() + " 获取到任务 " + dataTmpPL.length + " 条： \r\n");
+            if (dataTmpPL.length > 0) {
+              $("#infoArea").val($("#infoArea").val() + fixDatePL(dataTmpPL));
+              getDateP(0);
+            }
+          } else {
+            dataTmpPL = [];
+            console.log("error:" + s.retMsg);
+            $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + s.retMsg + "\r\n");
+            //$("#infoArea").val("error" + s.retMsg);
+          }
+        } else {
+          console.log("error:" + error);
+          $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + error + "\r\n");
+        }
+      });
+    }
+
+    function getDateP(pIndex) {
+      $("#infoArea").val($("#infoArea").val() + new Date() + " 正在获取第: " + pIndex + " 个任务 / 已获取数据：" + Object.keys(dataTmpP).length + "条" + "\r\n");
+      var url = "https://www.sd.10086.cn/esopappservice/commonService/openEbus/commonTransRequest?method=QryGrpMemTaskList";
+      request({
+        url: url,
+        method: "POST",
+        //json: true,
+        headers: {
+          "cookie": "loginToken=" + loginToken,
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+          "content-type": "application/json;charset=UTF-8",
+          "csrftoken": csrftoken,
+          "region": region,
+          "sec-ch-ua": "\"Chromium\";v=\"124\", \"Microsoft Edge\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+        },
+        // referrer: "https://www.sd.10086.cn/newesopcentralapp/v2/",
+        // referrerPolicy: "strict-origin-when-cross-origin",
+        body: "{\"inParams\":{\"oid\":\""
+          + dataTmpPL[pIndex].jobid + "\",\"region\":\""
+          + region + "\"},\"toRegion\":\""
+          + region + "\",\"strRegion\":\""
+          + region + "\"}",
+      }, function (error, response, body) {
+        //console.log(body);
+        //console.log(response);
+        if (!error && response.statusCode == 200) {
+          //console.log(body); // 请求成功的处理逻辑
+          //console.log("qryPage:" + qryPage);
+          localStorage.setItem("csrftoken", csrftoken);
+          localStorage.setItem("loginToken", loginToken);
+          var s = JSON.parse(body);
+          if (s.retCode == 0) {
+            var arrTmp = s.result.memTaskList;
+            fixDateP(arrTmp, dataTmpPL[pIndex].jobid);
+            $("#dateTextArea").val(dataTmpP.join("\r\n"));
+            if (dataTmpPL[pIndex + 1]) {
+              getDateP(pIndex + 1);
+            } else {
+              console.log("任务全部完成：共 " + pIndex + " 个任务 / 共 " + Object.keys(dataTmpP).length + " 条数据");
+              $("#infoArea").val($("#infoArea").val() + new Date() + "任务全部完成：共 " + pIndex + " 个任务 / 共 " + Object.keys(dataTmpP).length + " 条数据" + "\r\n");
+            }
+          } else {
+            dataTmpP = [];
+            console.log("error:" + s.retMsg);
+            $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + s.retMsg + "\r\n");
+            //$("#infoArea").val("error" + s.retMsg);
+          }
+        } else {
+          console.log("error:" + error);
+          $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + error + "\r\n");
+        }
+      });
+
+    }
+
+    //数据整理
+    function getDateStartP() {
+      dataTmp = [];
+      dataTmpP = [];
+      dataTmpPL = [];
+      $("#infoArea").val("");
+
+      zhanghao = $("#zhanghao").val(); //15863019860 青岛，13791396353 烟台
+      csrftoken = $("#csrftoken").val();
+      loginToken = $("#loginToken").val();  //cookie中找
+      // limitpage = $("#limitpage").val();
+      // startPage = $("#startPage").val();
+      // pageSize = $("#pageSize").val(); //每页数据条数
+      //region = $("#region").val();  //532 青岛  ，535 烟台 , 空 全部
+      //status = $("#status").val();  // 0 待归档， 1 成功， 2 失败，3 回退 ，空 全部
+      sdate = $("#sdate").val();
+      edate = $("#edate").val();
+
+      if (sdate == "" || edate == "") {
+        alert("缺少时间参数");
+        return false
+      }
+
+      if (zhanghao == "15863019860") {
+        region = "532";
+        regionStr = "青岛"
+      }
+      else if (zhanghao == "13791396353") {
+        region = "535";
+        regionStr = "烟台"
+      } else {
+        return false;
+        alert("账号信息错误");
+      }
+      getDatePL();
+    }
+
+
+    //数据整理
+    function checkDateStart() {
+      dataTmp = [];
+      dataTmpP = [];
+      dataTmpPL = [];
+      subArrTmp = $("#dateTextArea").val().split("\n");
+      for (var i = 0; i < subArrTmp.length; i++) {
+
+        if (subArrTmp[i].split("\t").length == 1) {
+          subArrTmp[i] = subArrTmp[i].split(",");
+        } else {
+          subArrTmp[i] = subArrTmp[i].split("\t");
+        }
+        if (subArrTmp[i].length >= 4) {
+          subArrTmp[i][0] = subArrTmp[i][2].trim();
+          subArrTmp[i][1] = subArrTmp[i][4].trim();
+        } else {
+          subArrTmp[i][0] = subArrTmp[i][0].trim();
+          subArrTmp[i][1] = subArrTmp[i][1].trim();
+        }
+      }
+
+      //zhanghao = $("#zhanghao").val(); //15863019860 青岛，13791396353 烟台
+      csrftoken = $("#csrftoken").val();
+      loginToken = $("#loginToken").val();  //cookie中找
+      // limitpage = $("#limitpage").val();
+      // startPage = $("#startPage").val();
+      // pageSize = $("#pageSize").val(); //每页数据条数
+      //region = $("#region").val();  //532 青岛  ，535 烟台 , 空 全部
+      //status = $("#status").val();  // 0 待归档， 1 成功， 2 失败，3 回退 ，空 全部
+
+      // if (zhanghao == "15863019860") {
+      //   region = "532";
+      //   regionStr = "青岛"
+      // }
+      // else if (zhanghao == "13791396353") {
+      //   region = "535";
+      //   regionStr = "烟台"
+      // } else {
+      //   return false;
+      //   alert("账号信息错误");
+      // }
+
+      if (subArrTmp.length > 0 && subArrTmp[0].length > 1) {
+        checkDate(0);
+      } else {
+        return false;
+        alert("待测试数据为空");
+      }
+    }
+
+
+    function checkDate(_index) {
+      $("#infoArea").val($("#infoArea").val() + new Date() + " 正在获取第" + (_index + 1) + "条数据: " + subArrTmp[_index][0] + "," + subArrTmp[_index][1] + "\r\n");
+      var url = "https://www.sd.10086.cn/esopappservice/commonService/openEbus/commonTransRequest?method=QryGrpMASPortRealName";
+      request({
+        url: url,
+        method: "POST",
+        //json: true,
+        headers: {
+          "cookie": "loginToken=" + loginToken,
+          "accept": "application/json, text/plain, */*",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+          "content-type": "application/json;charset=UTF-8",
+          "csrftoken": csrftoken,
+          "region": region,
+          "sec-ch-ua": "\"Chromium\";v=\"124\", \"Microsoft Edge\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+        },
+        // referrer: "https://www.sd.10086.cn/newesopcentralapp/v2/",
+        // referrerPolicy: "strict-origin-when-cross-origin",
+        body: "{\"inParams\":{\"groupId\":\"\",\"region\":\""
+          + region + "\",\"masterPort\":\"\",\"subPort\":\""
+          + subArrTmp[_index][0] + "\",\"portUnitName\":\"\",\"groupSign\":\"\",\"submitUnit\":\"\",\"status\":\""
+          + "" + "\",\"operid\":\"000000yd\",\"qryType\":\"\",\"qryByOperRight\":\"\",\"agentCreateTel\":\""
+          + "" + "\",\"qryPage\":"
+          + 1 + ",\"pageSize\":"
+          + 10 + "},\"toRegion\":\""
+          + region + "\",\"strRegion\":\""
+          + region + "\"}",
+      }, function (error, response, body) {
+        //console.log(body);
+        //console.log(response);
+        if (!error && response.statusCode == 200) {
+          //console.log(body); // 请求成功的处理逻辑
+          //console.log("qryPage:" + qryPage);
+          localStorage.setItem("csrftoken", csrftoken);
+          localStorage.setItem("loginToken", loginToken);
+          var s = JSON.parse(body);
+          if (s.retCode == 0) {
+            var arrTmp = s.result.realNameList;
+            if (arrTmp && arrTmp.length > 0) {
+              $("#infoArea").val($("#infoArea").val() + new Date() + " " +
+                arrTmp[0].statusDate + "," +
+                arrTmp[0].subPort + "," +
+                arrTmp[0].corpSign + "," +
+                arrTmp[0].portUnitName + "," +
+                arrTmp[0].status + "\r\n");
+              if (subArrTmp[_index][1] != arrTmp[0].corpSign) {
+                $("#infoArea").val($("#infoArea").val() + new Date() + " 警告!!!!!!!!!!!!!!!!!!!!签名不同!!!!!!!!!!!!!!!!!!!!!!!" + "\r\n");
+              }
+              if (arrTmp[0].agentCreateTel == "" || (arrTmp[0].agentCreateTel != "15863019860" && arrTmp[0].agentCreateTel != "13791396353")) {
+                $("#infoArea").val($("#infoArea").val() + new Date() + " 警告!!!!!agentCreateTel 错误：" + arrTmp[0].agentCreateTel + ", 平台无法查询此纪录!!!!!!!!!!!!!!!!!!!!!!!" + "\r\n");
+              }
+            } else {
+              $("#infoArea").val($("#infoArea").val() + new Date() + " 无记录 " + "\r\n");
+            }
+            if (subArrTmp[_index + 1]) {
+              checkDate(_index + 1);
+            } else {
+              console.log("任务全部完成：共 " + _index + " 条数据");
+              $("#infoArea").val($("#infoArea").val() + new Date() + "任务全部完成：共 " + (_index + 1) + " 条数据" + "\r\n");
+            }
+          } else {
+            dataTmp = [];
+            console.log("error：" + s.retMsg);
+            $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + s.retMsg + "\r\n");
+            //$("#infoArea").val("error" + s.retMsg);
+          }
+        } else {
+          console.log("error:" + error);
+          $("#infoArea").val($("#infoArea").val() + new Date() + ",error：" + error + "\r\n");
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
