@@ -1,34 +1,64 @@
 {
-    "name": "sign-tools",
-    "version": "1.0.0",
-    "main": "main.js",
-    "description": "tools for sign",
-    "author": "lihaibin",
-    "license": "ISC",
-    "devDependencies": {
-        "electron": "^20.0.0",
-        "electron-builder": "latest",
-        "electron-packager": "latest"
+  "name": "sign-tools",
+  "version": "1.0.0",
+  "main": "main.js",
+  "description": "tools for sign",
+  "author": "lihaibin",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^20.0.0",
+    "electron-builder": "^23.0.3",
+    "electron-packager": "^15.4.0"
+  },
+  "dependencies": {
+    "ajv": "^6.0.0",
+    "node-xlsx": "^0.12.1",
+    "nodemailer": "^4.6.8",
+    "nodemailer-smtp-transport": "^2.7.4",
+    "nodemailer-wellknown": "^0.2.3",
+    "request": "^2.79.0"
+  },
+  "build": {
+    "appId": "com.lihaibin.weichongyi-tools",
+    "copyright": "lihaibin",
+    "productName": "weichongyi-tools",
+    "win": {
+      "icon": "build/icons/icon.ico",
+      "target": ["nsis", "zip"]
     },
-    "dependencies": {
-        "ajv": "^6.0.0",
-        "node-xlsx": "^0.12.1",
-        "nodemailer": "^4.6.8",
-        "nodemailer-smtp-transport": "^2.7.4",
-        "nodemailer-wellknown": "^0.2.3",
-        "request": "^2.79.0"
+    "mac": {
+      "icon": "build/icons/icon.icns",
+      "category": "public.app-category.utilities",
+      "target": ["dmg", "zip"]
     },
-    "build": {
-        "appId": "com.lihaibin.weichongyi-tools",
-        "copyright": "lihaibin",
-        "productName": "weichongyi-tools",
-        "win": {
-            "icon": "app256.ico"
-        }
+    "linux": {
+      "target": ["AppImage", "zip"]
     },
-    "scripts": {
-        "builderdir": "electron-builder --dir",
-        "builder": "electron-packager . sing-tools --electron-version 3.0.7 --out ../OutApp --win --overwrite --icon=app.ico",
-        "packager": "electron-packager . sing-tools --electron-version 3.0.7 --out ../OutApp --win --overwrite --icon=app.ico"
-    }
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ]
+  },
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder -wl"
+  }
 }
