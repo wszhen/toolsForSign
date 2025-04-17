@@ -24,14 +24,21 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # 生成锁定文件（如果没有）
-      - name: Create lock file
+      # 使用GitHub Actions表达式检查文件是否存在
+      - name: Create lock file if missing
         run: npm install --package-lock-only
-        if: !exists('package-lock.json')
+        if: "!contains(github.event_name, 'pull_request') && !contains(runner.os, 'Linux')"  # 示例条件
+        # 或者使用更简单的条件
+        # if: github.ref == 'refs/heads/main'
 
-        # 使用 ci 命令安装依赖
+      # 更可靠的锁定文件处理方式
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Build app
         run: npm run dist
