@@ -15,37 +15,31 @@ jobs:
       fail-fast: false
 
     steps:
-      # 第一步：使用最新语法检查代码
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 第二步：设置Node.js环境
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      # 第三步：安装依赖
-      - name: Install dependencies
-        run: |
-          npm install
-          npm install electron-builder --save-dev
+      # 生成锁定文件（如果没有）
+      - name: Create lock file
+        run: npm install --package-lock-only
+        if: !exists('package-lock.json')
 
-      # 第四步：构建应用
-      - name: Build application
+        # 使用 ci 命令安装依赖
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
         run: npm run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 第五步：上传制品（使用最新稳定版）
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}-build
-          path: |
-            dist/*.dmg
-            dist/*.exe
-            dist/*.zip
-          if-no-files-found: error
-          retention-days: 5
+          path: dist/
