@@ -11,30 +11,28 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [macos-latest, windows-latest]
+      fail-fast: false
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # 确保所有 actions 都是 v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build for Windows
-        if: matrix.os == 'windows-latest'
-        run: npm run build:win
-
-      - name: Build for macOS
-        if: matrix.os == 'macos-latest'
-        run: npm run build:mac
+      - name: Build app
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3  # 已更新
         with:
-          name: ${{ matrix.os }}-build
+          name: ${{ runner.os }}-build
           path: dist/
