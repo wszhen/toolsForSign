@@ -2,9 +2,7 @@ name: Build Electron App
 
 on:
   workflow_dispatch:  # 允许手动触发
-  push:
-    tags:
-      - 'v*'
+  [push, pull_request]
 
 jobs:
   build:
@@ -15,8 +13,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,19 +21,16 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # 使用GitHub Actions表达式检查文件是否存在
-      - name: Create lock file if missing
-        run: npm install --package-lock-only
-        if: "!contains(github.event_name, 'pull_request') && !contains(runner.os, 'Linux')"  # 示例条件
-        # 或者使用更简单的条件
-        # if: github.ref == 'refs/heads/main'
-
-      # 更可靠的锁定文件处理方式
+      # 跨平台依赖安装方案
       - name: Install dependencies
+        shell: bash
         run: |
           if [ -f package-lock.json ]; then
+            echo "Using package-lock.json"
             npm ci
           else
+            echo "No lock file found, generating new one"
+            npm install --package-lock-only
             npm install
           fi
 
