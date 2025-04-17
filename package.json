@@ -7,8 +7,8 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^20.0.0",
-    "electron-builder": "^23.0.3",
-    "electron-packager": "^15.4.0"
+    "electron-builder": "latest",
+    "electron-packager": "latest"
   },
   "dependencies": {
     "ajv": "^6.0.0",
@@ -23,42 +23,20 @@
     "copyright": "lihaibin",
     "productName": "weichongyi-tools",
     "win": {
-      "icon": "build/icons/icon.ico",
+      "icon": "app256.ico",
       "target": ["nsis", "zip"]
     },
     "mac": {
-      "icon": "build/icons/icon.icns",
-      "category": "public.app-category.utilities",
-      "target": ["dmg", "zip"]
-    },
-    "linux": {
-      "target": ["AppImage", "zip"]
-    },
-    "files": [
-      "**/*",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/node_modules/*.d.ts",
-      "!**/node_modules/.bin"
-    ],
-    "directories": {
-      "buildResources": "build"
-    },
-    "extraResources": [
-      {
-        "from": "assets",
-        "to": "assets"
-      }
-    ]
+      "icon": "app.icns",
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.utilities"
+    }
   },
   "scripts": {
-    "start": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "postinstall": "electron-builder install-app-deps",
+    "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux",
-    "build:all": "electron-builder -wl"
+    "pack:win": "electron-packager . sign-tools --platform=win32 --arch=x64 --out=dist/win --overwrite --icon=app.ico",
+    "pack:mac": "electron-packager . sign-tools --platform=darwin --arch=x64 --out=dist/mac --overwrite --icon=app.icns"
   }
 }
