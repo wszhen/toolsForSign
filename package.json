@@ -34,6 +34,7 @@
     }
   },
   "scripts": {
+    "start": "electron .",
     "builderdir": "electron-builder --dir",
     "dist": "electron-builder",
     "build": "electron-builder",

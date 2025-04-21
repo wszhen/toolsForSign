@@ -62,7 +62,7 @@ ipcMain.on('getMsg', (event, msg) => {
         if(cookies){
           console.log("cookie:" + cookies.map(item => `${item.name}=${item.value};`).join(' '));
           //event.sender.send('getMsg-reply', cookies)//在main process里向web page发出message
-  
+
           // const cookie2 = cookies.map(item => `${item.name}=${item.value};`).join(' ');
           // ses2.cookies.set(cookies.map(item => `${item.name}=${item.value};`).join(' '), function (err, cookies) {
           //   console.log("dasdd:" + cookies);
@@ -115,7 +115,7 @@ function initWindow() {
     //show: false,
     webPreferences: {
       nodeIntegration: true,
-      //contextIsolation: false,
+      contextIsolation: false,
       //preload: `${__dirname}/preload.js`
     },
     webSecurity: false,
@@ -124,7 +124,7 @@ function initWindow() {
   });
   // win.loadURL(`file://${__dirname}/email2024.html`);
   win.loadURL(`file://${__dirname}/sign.html`);
-  //win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   //win.webContents.userAgent = 'MyCustomUserAgent';
   console.log("ok:");
