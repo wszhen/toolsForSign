@@ -22,6 +22,7 @@
     "appId": "com.lihaibin.weichongyi-tools",
     "copyright": "lihaibin",
     "productName": "weichongyi-tools",
+    "files": ["**/*", "!node_modules/", "!.vscode/"],
     "win": {
       "icon": "app256.ico",
       "target": ["nsis", "zip"]
@@ -33,11 +34,12 @@
     }
   },
   "scripts": {
+    "builderdir": "electron-builder --dir",
     "dist": "electron-builder",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
-    "pack:win": "electron-packager . sign-tools --platform=win32 --arch=x64 --out=dist/win --overwrite --icon=app.ico",
+    "pack:win": "electron-packager . sign-tools --platform=win32 --arch=x64 --out=dist/win --overwrite --icon=app256.ico",
     "pack:mac": "electron-packager . sign-tools --platform=darwin --arch=x64 --out=dist/mac --overwrite --icon=app.icns"
   }
 }
