@@ -22,11 +22,11 @@
     "appId": "com.lihaibin.weichongyi-tools",
     "copyright": "lihaibin",
     "productName": "weichongyi-tools",
-    "files": ["**/*", "!node_modules/", "!.vscode/"],
+    "files": ["**/*",  "!node_modules/{request,extend}/{test,examples}/**"],
     "extraResources": [
       {
-        "from": "node_modules/request",
-        "to": "node_modules/request"
+        "from": "node_modules/{request,extend}",
+        "to": "node_modules/{request,extend}"
       }
     ],
     "win": {
