@@ -28,7 +28,7 @@
         "from": "node_modules/request",
         "to": "node_modules/request"
       }
-    ]
+    ],
     "win": {
       "icon": "app256.ico",
       "target": ["nsis", "zip"]
