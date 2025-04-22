@@ -36,6 +36,7 @@ jobs:
           fi
 
       - name: Build app
+        shell: bash  # 关键修复点
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             export CSC_IDENTITY_AUTO_DISCOVERY=true
@@ -43,13 +44,13 @@ jobs:
           npm run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 仅 macOS 需要的变量
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Notarize macOS app (macOS only)
         if: runner.os == 'macOS'
+        shell: bash
         run: |
           npm run notarize
         env:
