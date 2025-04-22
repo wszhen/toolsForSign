@@ -124,7 +124,7 @@ function initWindow() {
   });
   // win.loadURL(`file://${__dirname}/email2024.html`);
   win.loadURL(`file://${__dirname}/sign.html`);
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   //win.webContents.userAgent = 'MyCustomUserAgent';
   console.log("ok:");
