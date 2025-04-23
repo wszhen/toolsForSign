@@ -29,7 +29,6 @@
         "to": "node_modules/{request,extend}"
       }
     ],
-    "afterSign": "js/notarize.js",
     "win": {
       "icon": "app256.ico",
       "target": ["nsis", "zip"]
@@ -37,11 +36,7 @@
     "mac": {
       "icon": "app.icns",
       "target": ["dmg", "zip"],
-      "category": "public.app-category.utilities",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "category": "public.app-category.utilities"
     }
   },
   "scripts": {

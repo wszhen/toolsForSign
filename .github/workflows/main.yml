@@ -1,7 +1,7 @@
 name: Build Electron App
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # 允许手动触发
   push:
     tags:
       - 'v*'
@@ -23,6 +23,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # 跨平台依赖安装方案
       - name: Install dependencies
         shell: bash
         run: |
@@ -36,27 +37,9 @@ jobs:
           fi
 
       - name: Build app
-        shell: bash  # 关键修复点
-        run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            export CSC_IDENTITY_AUTO_DISCOVERY=true
-          fi
-          npm run dist
+        run: npm run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-      - name: Notarize macOS app (macOS only)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          npm run notarize
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

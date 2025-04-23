@@ -76,7 +76,7 @@
         状态<input id="status" type="text" style="width:100%;overflow-y:scroll;" placeholder="空 全部,0待归档,1成功,2失败,3回退">
       </div>
       <div class="col-2" style="padding: 10px;margin-top: 14px;">
-        <button class="btn funcBtn" type="button" onclick="getDateStart();">分页获取全部签名数据<span
+        <button class="btn funcBtn" type="button" onclick="getDateStart();">分页获取全部签名数据(去重)<span
           id="downloadTips"></span></button>
       </div>
 
@@ -432,7 +432,8 @@
       var day = dateTime.getDate();
       if (Object.keys(dataTmp).length > 0) {
         let csv = dataTostring(dataTmp);//csv数据
-        var pathTmp = path.join(node_serve_path, regionStr + "_" + year + month + day + "_" + Object.keys(dataTmp).length + '.csv');
+        // var pathTmp = path.join(node_serve_path, regionStr + "_" + year + month + day + "_" + Object.keys(dataTmp).length + '.csv');
+        var pathTmp = path.join(os.homedir(), 'Downloads', regionStr + "_" + year + month + day + "_" + Object.keys(dataTmp).length + '.csv');
         fs.writeFile(pathTmp, `\ufeff${csv}`, {
           encoding: 'utf-8'
         }, err => {
@@ -445,7 +446,8 @@
         })
       } else if (dataTmpP.length > 0) {
         let csv = dataTmpP.join("\r\n");//csv数据
-        var pathTmp = path.join(node_serve_path, regionStr + "_" + sdate + "至" + edate + "_" + Object.keys(dataTmpP).length + "_任务" + '.csv');
+        // var pathTmp = path.join(node_serve_path, regionStr + "_" + sdate + "至" + edate + "_" + Object.keys(dataTmpP).length + "_任务" + '.csv');
+        var pathTmp = path.join(os.homedir(), 'Downloads',  regionStr + "_" + sdate + "至" + edate + "_" + Object.keys(dataTmpP).length + "_任务" + '.csv');
         fs.writeFile(pathTmp, `\ufeff${csv}`, {
           encoding: 'utf-8'
         }, err => {
@@ -458,7 +460,8 @@
         })
       } else if (dataTmpC.length > 0) {
         let csv = dataTmpC.join("\r\n");//csv数据
-        var pathTmp = path.join(node_serve_path, "校验导出_" + year + month + day + "_" + dataTmpC.length + '.csv');
+        // var pathTmp = path.join(node_serve_path, "校验导出_" + year + month + day + "_" + dataTmpC.length + '.csv');
+        var pathTmp = path.join(os.homedir(), 'Downloads', "校验导出_" + year + month + day + "_" + dataTmpC.length + '.csv');
         fs.writeFile(pathTmp, `\ufeff${csv}`, {
           encoding: 'utf-8'
         }, err => {

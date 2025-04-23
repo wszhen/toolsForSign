@@ -8,7 +8,8 @@ const ipcRenderer = require('electron').ipcRenderer;
 const path = require('path');
 const { app, shell } = require('electron');
 
-const node_serve_path = process.cwd(); //项目路径
+// const node_serve_path = process.cwd(); //项目路径
+const os = require('os'); //项目路径
 // const http = require('http');
 
 // const server = http.createServer((req, res) => {
